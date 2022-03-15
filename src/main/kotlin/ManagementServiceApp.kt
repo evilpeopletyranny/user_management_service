@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.dropwizard.Application
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
@@ -12,8 +13,8 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
         return "user-management-service"
     }
 
-    override fun initialize(bootstrap: Bootstrap<ManagementServiceConfiguration>?) {
-        super.initialize(bootstrap)
+    override fun initialize(bootstrap: Bootstrap<ManagementServiceConfiguration>) {
+        bootstrap.objectMapper.registerModule(KotlinModule())
     }
 
     override fun run(configuration: ManagementServiceConfiguration?, environment: Environment?) {

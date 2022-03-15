@@ -16,6 +16,8 @@ dependencies {
     testImplementation(kotlin("test"))
 
     implementation("io.dropwizard:dropwizard-core:2.0.28")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.7")
+
 }
 
 tasks.test {
