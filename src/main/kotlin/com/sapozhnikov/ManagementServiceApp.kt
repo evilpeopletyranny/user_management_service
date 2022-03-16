@@ -1,12 +1,13 @@
 package com.sapozhnikov
 
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.sapozhnikov.resource.UserResource
 import io.dropwizard.Application
+import io.dropwizard.jdbi3.JdbiFactory
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
 import io.federecio.dropwizard.swagger.SwaggerBundle
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration
-import com.sapozhnikov.resource.UserResource
 
 class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
     companion object {
@@ -19,6 +20,7 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
 
     override fun initialize(bootstrap: Bootstrap<ManagementServiceConfiguration>) {
         bootstrap.objectMapper.registerModule(KotlinModule())
+
         bootstrap.addBundle(object : SwaggerBundle<ManagementServiceConfiguration>() {
             override fun getSwaggerBundleConfiguration(configuration: ManagementServiceConfiguration): SwaggerBundleConfiguration {
                 return SwaggerBundleConfiguration().apply {
@@ -28,13 +30,23 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
                 }
             }
         })
+
+//        bootstrap.addBundle(object : MigrationsBundle<ManagementServiceConfiguration>() {
+//            override fun getDataSourceFactory(configuration: ManagementServiceConfiguration): PooledDataSourceFactory {
+//                return configuration.database
+//            }
+//
+//
+//        })
+
+
     }
 
-    override fun run(configuration: ManagementServiceConfiguration?, environment: Environment?) {
-        val userResource = UserResource()
+    override fun run(configuration: ManagementServiceConfiguration, environment: Environment) {
+        val factory = JdbiFactory()
+        val jdbi = factory.build(environment, configuration.database, "h2")
 
-        if (environment != null) {
-            environment.jersey().register(userResource)
-        }
+        val userResource = UserResource(jdbi)
+        environment.jersey().register(userResource)
     }
 }

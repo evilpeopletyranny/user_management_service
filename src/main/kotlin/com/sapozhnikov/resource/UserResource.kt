@@ -1,5 +1,6 @@
 package com.sapozhnikov.resource
 
+import com.sapozhnikov.dao.UserDAO
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -8,6 +9,8 @@ import io.swagger.annotations.ApiResponses
 import com.sapozhnikov.models.CreateUser
 import com.sapozhnikov.models.UpdateUser
 import com.sapozhnikov.models.User
+import org.jdbi.v3.core.Jdbi
+import org.jdbi.v3.sqlobject.kotlin.onDemand
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 import javax.validation.Valid
@@ -25,12 +28,13 @@ import javax.ws.rs.core.Response
     tags = ["User API"]
 )
 @Produces(MediaType.APPLICATION_JSON)
-class UserResource {
+class UserResource(val database: Jdbi) {
     /**
      * id generation
      * Starts with 1 because  User.usersList has 1 user by default
      * */
     private val counter: AtomicInteger = AtomicInteger(1)
+    private val userDao: UserDAO = database.onDemand(UserDAO::class)
 
     /**
      * Route to create a new user
@@ -68,7 +72,7 @@ class UserResource {
         responseContainer = "List")
     @ApiResponse(code = 200, message = "Ok")
     fun getAllUsers(): Response? {
-        return Response.ok(User.usersList).build()
+        return Response.ok(userDao.findAllUser()).build()
     }
 
     /**

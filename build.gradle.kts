@@ -15,9 +15,23 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
 
+    implementation("com.h2database:h2:2.1.210")
+
+
     implementation("io.dropwizard:dropwizard-core:2.0.28")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.7")
     implementation("com.smoketurner:dropwizard-swagger:2.0.0-1")
+    implementation("io.dropwizard:dropwizard-jdbi:1.3.29")
+    implementation("io.dropwizard:dropwizard-migrations:2.0.28")
+    implementation("io.dropwizard:dropwizard-jdbi3:2.0.28")
+    implementation("org.jdbi:jdbi3-kotlin:3.28.0")
+    implementation("org.jdbi:jdbi3-kotlin-sqlobject:3.28.0")
+
+
+
+
+
+
 }
 
 tasks.test {

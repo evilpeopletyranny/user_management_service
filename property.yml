@@ -1,4 +1,0 @@
-# the only required property is resourcePackage, for more config options see below
-swagger:
-  resourcePackage: kotlin/resource
-  version: "2.0"
