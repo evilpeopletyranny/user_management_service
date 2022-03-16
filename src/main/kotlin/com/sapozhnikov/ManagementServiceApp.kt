@@ -1,11 +1,12 @@
+package com.sapozhnikov
+
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.dropwizard.Application
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
 import io.federecio.dropwizard.swagger.SwaggerBundle
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration
-import io.swagger.jackson.SwaggerModule
-import resource.UserResource
+import com.sapozhnikov.resource.UserResource
 
 class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
     companion object {
@@ -20,7 +21,11 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
         bootstrap.objectMapper.registerModule(KotlinModule())
         bootstrap.addBundle(object : SwaggerBundle<ManagementServiceConfiguration>() {
             override fun getSwaggerBundleConfiguration(configuration: ManagementServiceConfiguration): SwaggerBundleConfiguration {
-                return configuration.swagger
+                return SwaggerBundleConfiguration().apply {
+                    resourcePackage = "com.sapozhnikov"
+                    title = "user management server"
+                    description = "Generated documentation for REST API server."
+                }
             }
         })
     }

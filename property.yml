@@ -1,6 +1,4 @@
-prop1: swagger
-prop2: admin
-
 # the only required property is resourcePackage, for more config options see below
 swagger:
-  resourcePackage: <a comma separated string of the packages that contain your @Api annotated resources>
+  resourcePackage: kotlin/resource
+  version: "2.0"

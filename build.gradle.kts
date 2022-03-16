@@ -29,5 +29,5 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("ManagementServiceApp")
+    mainClass.set("com.sapozhnikov.ManagementServiceApp")
 }

@@ -1,13 +1,13 @@
-package resource
+package com.sapozhnikov.resource
 
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
-import models.CreateUser
-import models.UpdateUser
-import models.User
+import com.sapozhnikov.models.CreateUser
+import com.sapozhnikov.models.UpdateUser
+import com.sapozhnikov.models.User
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 import javax.validation.Valid

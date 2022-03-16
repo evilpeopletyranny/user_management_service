@@ -1,17 +1,19 @@
-package models
+package com.sapozhnikov.models
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
-import org.hibernate.validator.constraints.Length
-import org.hibernate.validator.constraints.Range
-import javax.validation.constraints.Email
-import javax.validation.constraints.NotBlank
+import java.time.LocalDate
 
-@ApiModel(value = "UpdateUser", description = "model for user creation")
-class UpdateUser(
-    @get:NotBlank
-    @get:Length(min = 2, max = 50)
+@ApiModel(value = "User", description = "user model to store in database")
+data class User(
+    @ApiModelProperty(
+        value = "ID",
+        example = "22",
+    )
+    @JsonProperty("id")
+    val id: Int,
+
     @ApiModelProperty(
         value = "first username",
         example = "Jack",
@@ -19,8 +21,6 @@ class UpdateUser(
     @JsonProperty("first_name")
     val firstName: String,
 
-    @get:NotBlank
-    @get:Length(min = 2, max = 50)
     @ApiModelProperty(
         value = "second username",
         example = "Dawson",
@@ -28,7 +28,6 @@ class UpdateUser(
     @JsonProperty("last_name")
     val lastName: String,
 
-    @get:Range(min = 16, max = 99)
     @ApiModelProperty(
         value = "user age",
         example = "25",
@@ -36,8 +35,6 @@ class UpdateUser(
     @JsonProperty("age")
     val age: Int,
 
-    @get:NotBlank
-    @get:Length(min = 4, max = 50)
     @ApiModelProperty(
         value = "user login",
         example = "jAckDaWson23",
@@ -45,12 +42,24 @@ class UpdateUser(
     @JsonProperty("login")
     val login: String,
 
-    @get:NotBlank
-    @get:Email(regexp = "[A-Za-z0-9._%-+]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}")
     @ApiModelProperty(
         value = "user email",
         example = "jack.dawson@gmail.com",
     )
     @JsonProperty("email")
-    val email: String
+    val email: String,
+
+    @ApiModelProperty(
+        value = "user data registration",
+        example = "yyyy/mm/dd",
+    )
+    @JsonProperty("registration_date")
+    val registrationDate: LocalDate
 )
+{
+    companion object {
+        val usersList: MutableList<User> = mutableListOf(
+            User(1,"Default", "User", 18, "defUser", "default.user@gmail.com", LocalDate.now())
+        )
+    }
+}
