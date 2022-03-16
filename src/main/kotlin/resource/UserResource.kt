@@ -1,12 +1,16 @@
 package resource
 
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import io.swagger.annotations.ApiResponse
+import io.swagger.annotations.ApiResponses
 import models.CreateUser
 import models.UpdateUser
 import models.User
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 import javax.validation.Valid
-import javax.validation.constraints.NotNull
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
@@ -15,6 +19,11 @@ import javax.ws.rs.core.Response
  * Controller for working with the user model
  **/
 @Path("/user")
+@Api(
+    value = "user",
+    description = "Rest API for user operations",
+    tags = ["User API"]
+)
 @Produces(MediaType.APPLICATION_JSON)
 class UserResource {
     /**
@@ -30,6 +39,17 @@ class UserResource {
      * */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+        value = "creating a new user",
+        notes = "creates a new user based on valid data",
+        response = User::class
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(code = 200, message = "Ok"),
+            ApiResponse(code = 422, message = "Wrong data")
+        ]
+    )
     fun createNewUser(@Valid newUser: CreateUser): Response? {
         val user = User(counter.incrementAndGet(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, LocalDate.now())
         User.usersList.add(user)
@@ -41,6 +61,12 @@ class UserResource {
      * @return list of all users
      * */
     @GET
+    @ApiOperation(
+        value = "gets all users",
+        notes = "gets all users from database",
+        response = User::class,
+        responseContainer = "List")
+    @ApiResponse(code = 200, message = "Ok")
     fun getAllUsers(): Response? {
         return Response.ok(User.usersList).build()
     }
@@ -53,7 +79,18 @@ class UserResource {
      * */
     @GET
     @Path("/{id}")
-    fun getUser(@PathParam("id") id: Int): Response? {
+    @ApiOperation(
+        value = "get user",
+        notes = "get user by id",
+        response = User::class,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(code = 200, message = "Ok"),
+            ApiResponse(code = 404, message = "User is not found")
+        ]
+    )
+    fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: Int): Response? {
         val user = User.usersList.find { user -> user.id == id}
 
         return if (user != null) Response.ok(user).build()
@@ -69,7 +106,19 @@ class UserResource {
      * */
     @PUT
     @Path("{id}")
-    fun updateUser(@PathParam("id") id: Int, @Valid userToUpdate: UpdateUser): Response? {
+    @ApiOperation(
+        value = "updating user data",
+        notes = "update user data by passed id",
+        response = User::class,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(code = 200, message = "Ok"),
+            ApiResponse(code = 404, message = "User is not found"),
+            ApiResponse(code = 422, message = "Wrong data")
+        ]
+    )
+    fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: Int, @Valid userToUpdate: UpdateUser): Response? {
         val oldUser = User.usersList.find { user -> user.id == id }
         if (oldUser != null) {
             val ind = User.usersList.indexOf(oldUser)
@@ -92,8 +141,19 @@ class UserResource {
      *         if user does not found
      * */
     @DELETE
+    @ApiOperation(
+        value = "deleting user",
+        notes = "delete user by id",
+        response = User::class,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(code = 200, message = "Ok"),
+            ApiResponse(code = 404, message = "User is not found"),
+        ]
+    )
     @Path("{id}")
-    fun deleteUser(@PathParam("id") id: Int): Response? {
+    fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: Int): Response? {
         val user = User.usersList.find { user -> user.id == id }
 
         return if (user != null)

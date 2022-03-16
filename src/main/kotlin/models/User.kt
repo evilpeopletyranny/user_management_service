@@ -1,38 +1,58 @@
 package models
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.hibernate.validator.constraints.Length
-import org.hibernate.validator.constraints.Range
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 import java.time.LocalDate
-import javax.validation.constraints.Email
-import javax.validation.constraints.NotBlank
 
-
+@ApiModel(value = "User", description = "user model to store in database")
 data class User(
+    @ApiModelProperty(
+        value = "ID",
+        example = "22",
+    )
     @JsonProperty("id")
     val id: Int,
 
-    @NotBlank @Length (min = 2, max = 50)
+    @ApiModelProperty(
+        value = "first username",
+        example = "Jack",
+    )
     @JsonProperty("first_name")
     val firstName: String,
 
-    @NotBlank
-    @Length (min = 2, max = 50)
+    @ApiModelProperty(
+        value = "second username",
+        example = "Dawson",
+    )
     @JsonProperty("last_name")
     val lastName: String,
 
-    @Range(min = 16, max = 99)
+    @ApiModelProperty(
+        value = "user age",
+        example = "25",
+    )
     @JsonProperty("age")
     val age: Int,
 
-    @Length (min = 4, max = 50)
+    @ApiModelProperty(
+        value = "user login",
+        example = "jAckDaWson23",
+    )
     @JsonProperty("login")
     val login: String,
 
-    @Email(regexp = "[A-Za-z0-9._%-+]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}")
+    @ApiModelProperty(
+        value = "user email",
+        example = "jack.dawson@gmail.com",
+    )
     @JsonProperty("email")
     val email: String,
 
+    @ApiModelProperty(
+        value = "user data registration",
+        example = "yyyy/mm/dd",
+    )
     @JsonProperty("registration_date")
     val registrationDate: LocalDate
 )

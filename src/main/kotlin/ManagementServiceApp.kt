@@ -2,6 +2,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.dropwizard.Application
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
+import io.swagger.jackson.SwaggerModule
 import resource.UserResource
 
 class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
@@ -15,6 +16,7 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
 
     override fun initialize(bootstrap: Bootstrap<ManagementServiceConfiguration>) {
         bootstrap.objectMapper.registerModule(KotlinModule())
+        bootstrap.objectMapper.registerModule(SwaggerModule())
     }
 
     override fun run(configuration: ManagementServiceConfiguration?, environment: Environment?) {
