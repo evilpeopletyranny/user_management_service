@@ -1,4 +1,4 @@
-create
+
 
 create table USERS (
     id uuid not null primary key,
@@ -7,12 +7,13 @@ create table USERS (
     age integer not null,
     login varchar(50) unique not null,
     email varchar(255) unique not null,
-    registration_date date
+    registration_date date not null
 );
 
 INSERT INTO USERS VALUES (random_uuid(),  'Default', 'User', 18, 'defUser', 'default.user@gmail.com', '2022-03-016');
 INSERT INTO USERS VALUES (random_uuid(),  'Default', 'User', 18, 'defser', 'deault.user@gmail.com', '2022-03-016');
 
 SELECT * FROM USERS;
+
 
 drop table USERS;

@@ -3,7 +3,9 @@ package com.sapozhnikov
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.sapozhnikov.resource.UserResource
 import io.dropwizard.Application
+import io.dropwizard.db.DataSourceFactory
 import io.dropwizard.jdbi3.JdbiFactory
+import io.dropwizard.migrations.MigrationsBundle
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
 import io.federecio.dropwizard.swagger.SwaggerBundle
@@ -32,13 +34,11 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
             }
         })
 
-//        bootstrap.addBundle(object : MigrationsBundle<ManagementServiceConfiguration>() {
-//            override fun getDataSourceFactory(configuration: ManagementServiceConfiguration): PooledDataSourceFactory {
-//                return configuration.database
-//            }
-//
-//
-//        })
+        bootstrap.addBundle(object : MigrationsBundle<ManagementServiceConfiguration>() {
+            override fun getDataSourceFactory(configuration: ManagementServiceConfiguration): DataSourceFactory {
+                return configuration.database
+            }
+        })
 
 
     }
