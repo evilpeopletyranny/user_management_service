@@ -8,6 +8,7 @@ import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
 import io.federecio.dropwizard.swagger.SwaggerBundle
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration
+import org.jdbi.v3.core.h2.H2DatabasePlugin
 
 class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
     companion object {
@@ -45,6 +46,7 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
     override fun run(configuration: ManagementServiceConfiguration, environment: Environment) {
         val factory = JdbiFactory()
         val jdbi = factory.build(environment, configuration.database, "h2")
+        jdbi.installPlugin(H2DatabasePlugin())
 
         val userResource = UserResource(jdbi)
         environment.jersey().register(userResource)

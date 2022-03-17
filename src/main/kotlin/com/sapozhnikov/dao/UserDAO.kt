@@ -1,12 +1,13 @@
 package com.sapozhnikov.dao
 
-import com.sapozhnikov.models.User
+import com.sapozhnikov.model.UserEntity
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper
 import org.jdbi.v3.sqlobject.statement.SqlQuery
-import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper
 
-@RegisterMapper(User::class)
 interface UserDAO {
 
-    @SqlQuery("SELECT * FROM USERS")
-    fun findAllUser(): List<User>
+    @SqlQuery("SELECT * FROM PUBLIC.USERS")
+    @RegisterBeanMapper(UserEntity::class)
+    fun findAllUser(): List<UserEntity>
+
 }

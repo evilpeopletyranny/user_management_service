@@ -1,18 +1,14 @@
 package com.sapozhnikov.resource
 
 import com.sapozhnikov.dao.UserDAO
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
-import io.swagger.annotations.ApiResponse
-import io.swagger.annotations.ApiResponses
-import com.sapozhnikov.models.CreateUser
-import com.sapozhnikov.models.UpdateUser
-import com.sapozhnikov.models.User
+import com.sapozhnikov.model.CreateUser
+import com.sapozhnikov.model.UpdateUser
+import com.sapozhnikov.model.User
+import io.swagger.annotations.*
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.sqlobject.kotlin.onDemand
 import java.time.LocalDate
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.*
 import javax.validation.Valid
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
@@ -28,12 +24,14 @@ import javax.ws.rs.core.Response
     tags = ["User API"]
 )
 @Produces(MediaType.APPLICATION_JSON)
-class UserResource(val database: Jdbi) {
+class UserResource(
+    private val database: Jdbi
+
+) {
     /**
      * id generation
      * Starts with 1 because  User.usersList has 1 user by default
      * */
-    private val counter: AtomicInteger = AtomicInteger(1)
     private val userDao: UserDAO = database.onDemand(UserDAO::class)
 
     /**
@@ -55,7 +53,7 @@ class UserResource(val database: Jdbi) {
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response? {
-        val user = User(counter.incrementAndGet(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, LocalDate.now())
+        val user = User(UUID.randomUUID().toString(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, LocalDate.now())
         User.usersList.add(user)
         return Response.ok(user).build()
     }
@@ -73,6 +71,7 @@ class UserResource(val database: Jdbi) {
     @ApiResponse(code = 200, message = "Ok")
     fun getAllUsers(): Response? {
         return Response.ok(userDao.findAllUser()).build()
+//        return Response.ok(User.usersList).build()
     }
 
     /**
@@ -94,8 +93,8 @@ class UserResource(val database: Jdbi) {
             ApiResponse(code = 404, message = "User is not found")
         ]
     )
-    fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: Int): Response? {
-        val user = User.usersList.find { user -> user.id == id}
+    fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: UUID): Response? {
+        val user = User.usersList.find { user -> user.uid == id.toString() }
 
         return if (user != null) Response.ok(user).build()
         else Response.status(Response.Status.NOT_FOUND).build()
@@ -122,13 +121,13 @@ class UserResource(val database: Jdbi) {
             ApiResponse(code = 422, message = "Wrong data")
         ]
     )
-    fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: Int, @Valid userToUpdate: UpdateUser): Response? {
-        val oldUser = User.usersList.find { user -> user.id == id }
+    fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response? {
+        val oldUser = User.usersList.find { user -> user.uid == id.toString() }
         if (oldUser != null) {
             val ind = User.usersList.indexOf(oldUser)
 
-            val user = User(id, userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age,
-                userToUpdate.login, userToUpdate.email, oldUser.registrationDate)
+            val user = User(id.toString(), userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age,
+                userToUpdate.login, userToUpdate.email, oldUser.createdAt)
 
                 User.usersList[ind] = user
 
@@ -157,8 +156,8 @@ class UserResource(val database: Jdbi) {
         ]
     )
     @Path("{id}")
-    fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: Int): Response? {
-        val user = User.usersList.find { user -> user.id == id }
+    fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: UUID): Response? {
+        val user = User.usersList.find { user -> user.uid == id.toString() }
 
         return if (user != null)
         {
