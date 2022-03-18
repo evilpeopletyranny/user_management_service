@@ -1,6 +1,7 @@
 package com.sapozhnikov.resource
 
 import com.sapozhnikov.dao.UserDAO
+import com.sapozhnikov.mappers.UserMapper
 import com.sapozhnikov.model.CreateUser
 import com.sapozhnikov.model.UpdateUser
 import com.sapozhnikov.model.User
@@ -9,7 +10,6 @@ import io.swagger.annotations.*
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.sqlobject.kotlin.onDemand
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.*
 import javax.validation.Valid
 import javax.ws.rs.*
@@ -26,15 +26,9 @@ import javax.ws.rs.core.Response
     tags = ["User API"]
 )
 @Produces(MediaType.APPLICATION_JSON)
-class UserResource(
-    private val database: Jdbi
-
-) {
-    /**
-     * id generation
-     * Starts with 1 because  User.usersList has 1 user by default
-     * */
+class UserResource(database: Jdbi) {
     private val userDao: UserDAO = database.onDemand(UserDAO::class)
+    private val userMapper: UserMapper = UserMapper()
 
     /**
      * Route to create a new user
@@ -55,10 +49,12 @@ class UserResource(
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response? {
-        val user = UserEntity(UUID.randomUUID(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, LocalDate.now())
+        val user = UserEntity(UUID.randomUUID(), newUser.firstName, newUser.lastName,
+            newUser.age, newUser.login, newUser.email, LocalDate.now())
 
         userDao.insertUser(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
-        return Response.ok(user).build()
+
+        return Response.ok(userMapper.map(user)).build()
     }
 
     /**
@@ -73,8 +69,11 @@ class UserResource(
         responseContainer = "List")
     @ApiResponse(code = 200, message = "Ok")
     fun getAllUsers(): Response? {
-        return Response.ok(userDao.findAllUser()).build()
-//        return Response.ok(User.usersList).build()
+        val userList: List<UserEntity> = userDao.findAllUser()
+
+        return Response.ok(
+            userList.map { user -> userMapper.map(user) }
+        ).build()
     }
 
     /**
@@ -97,10 +96,9 @@ class UserResource(
         ]
     )
     fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: UUID): Response? {
-//        val user = User.usersList.find { user -> user.id == id }
+        val user = userDao.findUserById(id)
 
-        val user = userDao.getUserById(id)
-        return Response.ok(user).build()
+        return Response.ok(userMapper.map(user)).build()
     }
 
     /**
@@ -125,19 +123,12 @@ class UserResource(
         ]
     )
     fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response? {
-        val oldUser = User.usersList.find { user -> user.id == id }
-        if (oldUser != null) {
-            val ind = User.usersList.indexOf(oldUser)
+        val user = userDao.findUserById(id)
+        val updatedUser = UserEntity(user.id, userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age, userToUpdate.login, userToUpdate.email, user.registrationDate)
 
-            val user = User(id, userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age,
-                userToUpdate.login, userToUpdate.email, oldUser.registrationDate)
+        userDao.updateUser(updatedUser.id, updatedUser.firstName, updatedUser.lastName, updatedUser.age, updatedUser.login, updatedUser.email, updatedUser.registrationDate)
 
-                User.usersList[ind] = user
-
-                return Response.ok(user).build()
-        }
-
-        return Response.status(Response.Status.NOT_FOUND).build()
+        return Response.ok(userMapper.map(updatedUser)).build()
     }
 
     /**
@@ -160,15 +151,9 @@ class UserResource(
     )
     @Path("{id}")
     fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: UUID): Response? {
+        val user = userDao.findUserById(id)
         userDao.deleteById(id)
 
-        return Response.status(Response.Status.OK).build()
-
-//        return if (user != null)
-//        {
-//            User.usersList.remove(user)
-//            Response.ok(user).build()
-//        }
-//        else Response.status(Response.Status.NOT_FOUND).build()
+        return Response.ok(userMapper.map(user)).build()
     }
 }
