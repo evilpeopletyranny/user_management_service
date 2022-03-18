@@ -4,10 +4,12 @@ import com.sapozhnikov.dao.UserDAO
 import com.sapozhnikov.model.CreateUser
 import com.sapozhnikov.model.UpdateUser
 import com.sapozhnikov.model.User
+import com.sapozhnikov.model.UserEntity
 import io.swagger.annotations.*
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.sqlobject.kotlin.onDemand
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 import javax.validation.Valid
 import javax.ws.rs.*
@@ -53,8 +55,10 @@ class UserResource(
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response? {
-        val user = User(UUID.randomUUID().toString(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, LocalDate.now())
-        User.usersList.add(user)
+        val user = UserEntity(UUID.randomUUID(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, java.sql.Date.valueOf(
+            LocalDate.now()))
+
+        userDao.insertUser(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
         return Response.ok(user).build()
     }
 
@@ -94,10 +98,10 @@ class UserResource(
         ]
     )
     fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: UUID): Response? {
-        val user = User.usersList.find { user -> user.uid == id.toString() }
+//        val user = User.usersList.find { user -> user.id == id }
 
-        return if (user != null) Response.ok(user).build()
-        else Response.status(Response.Status.NOT_FOUND).build()
+        val user = userDao.getUserById(id)
+        return Response.ok(user).build()
     }
 
     /**
@@ -122,12 +126,12 @@ class UserResource(
         ]
     )
     fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response? {
-        val oldUser = User.usersList.find { user -> user.uid == id.toString() }
+        val oldUser = User.usersList.find { user -> user.id == id }
         if (oldUser != null) {
             val ind = User.usersList.indexOf(oldUser)
 
-            val user = User(id.toString(), userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age,
-                userToUpdate.login, userToUpdate.email, oldUser.createdAt)
+            val user = User(id, userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age,
+                userToUpdate.login, userToUpdate.email, oldUser.registrationDate)
 
                 User.usersList[ind] = user
 
@@ -157,13 +161,15 @@ class UserResource(
     )
     @Path("{id}")
     fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: UUID): Response? {
-        val user = User.usersList.find { user -> user.uid == id.toString() }
+        userDao.deleteById(id)
 
-        return if (user != null)
-        {
-            User.usersList.remove(user)
-            Response.ok(user).build()
-        }
-        else Response.status(Response.Status.NOT_FOUND).build()
+        return Response.status(Response.Status.OK).build()
+
+//        return if (user != null)
+//        {
+//            User.usersList.remove(user)
+//            Response.ok(user).build()
+//        }
+//        else Response.status(Response.Status.NOT_FOUND).build()
     }
 }

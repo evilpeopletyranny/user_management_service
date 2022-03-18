@@ -1,12 +1,14 @@
 package com.sapozhnikov.model
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName
+import java.sql.Date
 import java.time.LocalDateTime
+import java.util.UUID
 
 data class UserEntity(
 
     @ColumnName("id")
-    val uid: String,
+    val id: UUID,
 
     @ColumnName("first_name")
     val firstName: String,
@@ -24,5 +26,5 @@ data class UserEntity(
     val email: String,
 
     @ColumnName("registration_date")
-    val createdAt: LocalDateTime
+    val registrationDate: Date
 )

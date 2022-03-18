@@ -9,7 +9,7 @@
     <changeSet id="1" author="vlad sapozhnikov">
         <createTable tableName="USERS">
             <column name="id" type="uuid">
-                <constraints primaryKey="true" nullable="false"/>
+                <constraints primaryKey="true" nullable="false" unique="true"/>
             </column>
             <column name="first_name" type="varchar(50)">
                 <constraints nullable="false"/>
@@ -27,7 +27,7 @@
                 <constraints nullable="false" unique="true"/>
             </column>
             <column name="registration_date" type="date">
-                <constraints nullable="false"/>
+                <constraints nullable="false" />
             </column>
         </createTable>
     </changeSet>

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.*
 
 @ApiModel(value = "User", description = "user model to store in database")
@@ -14,7 +13,7 @@ data class User(
         example = "22",
     )
     @JsonProperty("id")
-    val uid: String,
+    val id: UUID,
 
     @ApiModelProperty(
         value = "first username",
@@ -56,12 +55,12 @@ data class User(
         example = "yyyy/mm/dd",
     )
     @JsonProperty("registration_date")
-    val createdAt: LocalDate
+    val registrationDate: LocalDate
 )
 {
     companion object {
         val usersList: MutableList<User> = mutableListOf(
-            User(UUID.randomUUID().toString(),"Default", "User", 18, "defUser", "default.user@gmail.com", LocalDate.now())
+            User(UUID.randomUUID(),"Default", "User", 18, "defUser", "default.user@gmail.com", LocalDate.now())
         )
     }
 }
