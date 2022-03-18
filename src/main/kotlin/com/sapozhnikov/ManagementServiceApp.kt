@@ -56,11 +56,11 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
 
     override fun run(configuration: ManagementServiceConfiguration, environment: Environment) {
         LiquibaseMigrator.migrate(configuration.database, environment)
-        val factory = JdbiFactory()
-        val jdbi = factory.build(environment, configuration.database, "h2")
-        jdbi.installPlugin(H2DatabasePlugin())
-        jdbi.installPlugin(KotlinPlugin())
-        jdbi.installPlugin(KotlinSqlObjectPlugin())
+//        val factory = JdbiFactory()
+//        val jdbi = factory.build(environment, configuration.database, "h2")
+//        jdbi.installPlugin(H2DatabasePlugin())
+//        jdbi.installPlugin(KotlinPlugin())
+//        jdbi.installPlugin(KotlinSqlObjectPlugin())
 
         val di = DependencyInjectionConfiguration.getInstance(configuration, environment)
 
@@ -72,6 +72,13 @@ class ManagementServiceApp : Application<ManagementServiceConfiguration>() {
 object DependencyInjectionConfiguration {
     fun getInstance(configuration: ManagementServiceConfiguration, environment: Environment) : Kodein {
         return Kodein {
+            bind<JdbiFactory>() with singleton { JdbiFactory() }
+            bind<Jdbi>() with singleton {
+                instance<JdbiFactory>()
+                .build(environment, configuration.database, "h2")
+                .installPlugin(H2DatabasePlugin())
+                .installPlugin(KotlinPlugin())
+                .installPlugin(KotlinSqlObjectPlugin())}
             bind<IUserMapper>() with singleton { UserMapper() }
             bind<UserDAO>() with singleton { instance<Jdbi>().onDemand(UserDAO::class ) }
         }
