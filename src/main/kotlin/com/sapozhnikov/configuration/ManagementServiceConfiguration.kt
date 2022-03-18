@@ -1,4 +1,4 @@
-package com.sapozhnikov
+package com.sapozhnikov.configuration
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.dropwizard.Configuration

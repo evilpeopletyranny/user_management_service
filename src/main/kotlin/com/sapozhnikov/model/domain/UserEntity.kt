@@ -1,10 +1,8 @@
 package com.sapozhnikov.model.domain
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName
-import java.sql.Date
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 data class UserEntity(
 

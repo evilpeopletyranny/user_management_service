@@ -57,10 +57,3 @@ data class User(
     @JsonProperty("registration_date")
     val registrationDate: LocalDate
 )
-{
-    companion object {
-        val usersList: MutableList<User> = mutableListOf(
-            User(UUID.randomUUID(),"Default", "User", 18, "defUser", "default.user@gmail.com", LocalDate.now())
-        )
-    }
-}

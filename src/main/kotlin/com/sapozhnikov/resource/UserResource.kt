@@ -7,7 +7,6 @@ import com.sapozhnikov.model.domain.UpdateUser
 import com.sapozhnikov.model.domain.User
 import com.sapozhnikov.model.domain.UserEntity
 import io.swagger.annotations.*
-import org.jdbi.v3.core.Jdbi
 import java.util.*
 import javax.validation.Valid
 import javax.ws.rs.*
@@ -25,16 +24,9 @@ import javax.ws.rs.core.Response
 )
 @Produces(MediaType.APPLICATION_JSON)
 class UserResource(
-    datebase: Jdbi,
-
     private val userMapperImpl: IUserMapper,
     private val userDao: UserDAO,
-
-//    private val userDao: UserDAO = database.onDemand(UserDAO::class.java),
-//    private val userMapperImpl: IUserMapper = UserMapper()
-
-    ) {
-
+) {
     /**
      * Route to create a new user
      * @param newUser - data of the created user
