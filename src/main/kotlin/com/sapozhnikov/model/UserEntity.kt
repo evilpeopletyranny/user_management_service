@@ -2,6 +2,7 @@ package com.sapozhnikov.model
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName
 import java.sql.Date
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -26,5 +27,5 @@ data class UserEntity(
     val email: String,
 
     @ColumnName("registration_date")
-    val registrationDate: Date
+    val registrationDate: LocalDate
 )

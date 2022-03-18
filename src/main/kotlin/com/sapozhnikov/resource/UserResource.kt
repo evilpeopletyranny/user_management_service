@@ -55,8 +55,7 @@ class UserResource(
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response? {
-        val user = UserEntity(UUID.randomUUID(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, java.sql.Date.valueOf(
-            LocalDate.now()))
+        val user = UserEntity(UUID.randomUUID(), newUser.firstName, newUser.lastName, newUser.age, newUser.login, newUser.email, LocalDate.now())
 
         userDao.insertUser(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
         return Response.ok(user).build()
