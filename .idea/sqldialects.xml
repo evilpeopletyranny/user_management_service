@@ -2,7 +2,7 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/h2Database.sql" dialect="H2" />
-    <file url="file://$PROJECT_DIR$/src/main/kotlin/com/sapozhnikov/dao/UserDAO.kt" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/src/main/kotlin/com/sapozhnikov/model/dao/UserDAO.kt" dialect="GenericSQL" />
     <file url="PROJECT" dialect="H2" />
   </component>
 </project>

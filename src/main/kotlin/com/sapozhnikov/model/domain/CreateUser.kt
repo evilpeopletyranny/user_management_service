@@ -1,4 +1,4 @@
-package com.sapozhnikov.model
+package com.sapozhnikov.model.domain
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.annotations.ApiModel
@@ -8,8 +8,8 @@ import org.hibernate.validator.constraints.Range
 import javax.validation.constraints.Email
 import javax.validation.constraints.NotBlank
 
-@ApiModel(value = "UpdateUser", description = "model for user creation")
-class UpdateUser(
+@ApiModel(value = "CreateUser", description = "model for user creation")
+class CreateUser(
     @get:NotBlank
     @get:Length(min = 2, max = 50)
     @ApiModelProperty(
@@ -52,5 +52,5 @@ class UpdateUser(
         example = "jack.dawson@gmail.com",
     )
     @JsonProperty("email")
-    val email: String
+    val email: String,
 )

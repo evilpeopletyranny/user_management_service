@@ -1,15 +1,13 @@
 package com.sapozhnikov.resource
 
-import com.sapozhnikov.dao.UserDAO
-import com.sapozhnikov.mappers.UserMapper
-import com.sapozhnikov.model.CreateUser
-import com.sapozhnikov.model.UpdateUser
-import com.sapozhnikov.model.User
-import com.sapozhnikov.model.UserEntity
+import com.sapozhnikov.mapper.IUserMapper
+import com.sapozhnikov.model.dao.UserDAO
+import com.sapozhnikov.model.domain.CreateUser
+import com.sapozhnikov.model.domain.UpdateUser
+import com.sapozhnikov.model.domain.User
+import com.sapozhnikov.model.domain.UserEntity
 import io.swagger.annotations.*
 import org.jdbi.v3.core.Jdbi
-import org.jdbi.v3.sqlobject.kotlin.onDemand
-import java.time.LocalDate
 import java.util.*
 import javax.validation.Valid
 import javax.ws.rs.*
@@ -26,9 +24,16 @@ import javax.ws.rs.core.Response
     tags = ["User API"]
 )
 @Produces(MediaType.APPLICATION_JSON)
-class UserResource(database: Jdbi) {
-    private val userDao: UserDAO = database.onDemand(UserDAO::class)
-    private val userMapper: UserMapper = UserMapper()
+class UserResource(
+    datebase: Jdbi,
+
+    private val userMapperImpl: IUserMapper,
+    private val userDao: UserDAO,
+
+//    private val userDao: UserDAO = database.onDemand(UserDAO::class.java),
+//    private val userMapperImpl: IUserMapper = UserMapper()
+
+    ) {
 
     /**
      * Route to create a new user
@@ -49,12 +54,9 @@ class UserResource(database: Jdbi) {
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response? {
-        val user = UserEntity(UUID.randomUUID(), newUser.firstName, newUser.lastName,
-            newUser.age, newUser.login, newUser.email, LocalDate.now())
-
-        userDao.insertUser(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
-
-        return Response.ok(userMapper.map(user)).build()
+        val user = userMapperImpl.mapToUserModel(newUser)
+        userDao.insertUser(userMapperImpl.mapToUserEntity(user))
+        return Response.ok(user).build()
     }
 
     /**
@@ -72,7 +74,7 @@ class UserResource(database: Jdbi) {
         val userList: List<UserEntity> = userDao.findAllUser()
 
         return Response.ok(
-            userList.map { user -> userMapper.map(user) }
+            userList.map { user -> userMapperImpl.mapToUserModel(user) }
         ).build()
     }
 
@@ -101,7 +103,7 @@ class UserResource(database: Jdbi) {
         return if (user == null) {
             Response.status(Response.Status.NOT_FOUND).build()
         }
-        else Response.ok(userMapper.map(user)).build()
+        else Response.ok(userMapperImpl.mapToUserModel(user)).build()
     }
 
     /**
@@ -132,9 +134,9 @@ class UserResource(database: Jdbi) {
             Response.status(Response.Status.NOT_FOUND).build()
         }
         else {
-            val updatedUser = UserEntity(user.id, userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age, userToUpdate.login, userToUpdate.email, user.registrationDate)
-            userDao.updateUser(updatedUser.id, updatedUser.firstName, updatedUser.lastName, updatedUser.age, updatedUser.login, updatedUser.email, updatedUser.registrationDate)
-            Response.ok(userMapper.map(updatedUser)).build()
+            val updatedUser = userMapperImpl.mapToUserModel(user.id, userToUpdate, user.registrationDate)
+            userDao.updateUser(userMapperImpl.mapToUserEntity(updatedUser))
+            Response.ok(updatedUser).build()
         }
 
     }
@@ -166,7 +168,7 @@ class UserResource(database: Jdbi) {
         }
         else {
             userDao.deleteById(id)
-            Response.ok(userMapper.map(user)).build()
+            Response.ok(userMapperImpl.mapToUserModel(user)).build()
         }
 
     }

@@ -1,4 +1,4 @@
-package com.sapozhnikov.model
+package com.sapozhnikov.model.domain
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName
 import java.sql.Date
