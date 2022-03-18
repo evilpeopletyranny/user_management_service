@@ -98,7 +98,10 @@ class UserResource(database: Jdbi) {
     fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: UUID): Response? {
         val user = userDao.findUserById(id)
 
-        return Response.ok(userMapper.map(user)).build()
+        return if (user == null) {
+            Response.status(Response.Status.NOT_FOUND).build()
+        }
+        else Response.ok(userMapper.map(user)).build()
     }
 
     /**
@@ -124,11 +127,16 @@ class UserResource(database: Jdbi) {
     )
     fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response? {
         val user = userDao.findUserById(id)
-        val updatedUser = UserEntity(user.id, userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age, userToUpdate.login, userToUpdate.email, user.registrationDate)
 
-        userDao.updateUser(updatedUser.id, updatedUser.firstName, updatedUser.lastName, updatedUser.age, updatedUser.login, updatedUser.email, updatedUser.registrationDate)
+        return if (user == null) {
+            Response.status(Response.Status.NOT_FOUND).build()
+        }
+        else {
+            val updatedUser = UserEntity(user.id, userToUpdate.firstName, userToUpdate.lastName, userToUpdate.age, userToUpdate.login, userToUpdate.email, user.registrationDate)
+            userDao.updateUser(updatedUser.id, updatedUser.firstName, updatedUser.lastName, updatedUser.age, updatedUser.login, updatedUser.email, updatedUser.registrationDate)
+            Response.ok(userMapper.map(updatedUser)).build()
+        }
 
-        return Response.ok(userMapper.map(updatedUser)).build()
     }
 
     /**
@@ -152,8 +160,14 @@ class UserResource(database: Jdbi) {
     @Path("{id}")
     fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: UUID): Response? {
         val user = userDao.findUserById(id)
-        userDao.deleteById(id)
 
-        return Response.ok(userMapper.map(user)).build()
+        return if (user == null) {
+            Response.status(Response.Status.NOT_FOUND).build()
+        }
+        else {
+            userDao.deleteById(id)
+            Response.ok(userMapper.map(user)).build()
+        }
+
     }
 }
