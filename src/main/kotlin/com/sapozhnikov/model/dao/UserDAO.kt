@@ -2,6 +2,7 @@ package com.sapozhnikov.model.dao
 
 import com.sapozhnikov.model.domain.UserEntity
 import org.jdbi.v3.sqlobject.customizer.BindBean
+import org.jdbi.v3.sqlobject.customizer.Define
 import org.jdbi.v3.sqlobject.statement.SqlQuery
 import org.jdbi.v3.sqlobject.statement.SqlUpdate
 import java.util.*
@@ -11,9 +12,12 @@ interface UserDAO {
     @SqlQuery(
         """
             SELECT * FROM USERS
+            ORDER BY <orderBy> <sort>
+            LIMIT :limit
+            OFFSET :offset
         """
     )
-    fun findAllUser(): List<UserEntity>
+    fun findAllUser(limit: Int, offset: Int, @Define("orderBy") orderBy: String, @Define("sort") sort: String): List<UserEntity>
 
     @SqlQuery(
         """

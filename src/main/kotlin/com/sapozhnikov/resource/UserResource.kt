@@ -7,6 +7,7 @@ import com.sapozhnikov.model.domain.UpdateUser
 import com.sapozhnikov.model.domain.User
 import com.sapozhnikov.model.domain.UserEntity
 import io.swagger.annotations.*
+import org.hibernate.validator.constraints.Range
 import java.util.*
 import javax.validation.Valid
 import javax.ws.rs.*
@@ -63,19 +64,24 @@ class UserResource(
         responseContainer = "List")
     @ApiResponse(code = 200, message = "Ok")
     fun getAllUsers(
+        @Range(min = 0, max = 100)
         @DefaultValue("25")
         @QueryParam("limit")
         limit: Int,
 
-        @QueryParam("0")
-        offset: Int
+        @DefaultValue("0")
+        @QueryParam("offset")
+        offset: Int,
+
+        @DefaultValue("id")
+        @QueryParam("orderBy")
+        orderBy: String,
+
+        @DefaultValue("ASC")
+        @QueryParam("sort")
+        sort: String
     ): Response {
-        println(limit)
-        println(offset)
-
-
-
-        val userList: List<UserEntity> = userDao.findAllUser()
+        val userList: List<UserEntity> = userDao.findAllUser(limit, offset, orderBy, sort)
 
         return Response.ok(
             userList.map { user -> userMapperImpl.mapToUserModel(user) }
