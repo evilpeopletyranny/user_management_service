@@ -45,7 +45,7 @@ class UserResource(
             ApiResponse(code = 422, message = "Wrong data")
         ]
     )
-    fun createNewUser(@Valid newUser: CreateUser): Response? {
+    fun createNewUser(@Valid newUser: CreateUser): Response {
         val user = userMapperImpl.mapToUserModel(newUser)
         userDao.insertUser(userMapperImpl.mapToUserEntity(user))
         return Response.ok(user).build()
@@ -62,7 +62,19 @@ class UserResource(
         response = User::class,
         responseContainer = "List")
     @ApiResponse(code = 200, message = "Ok")
-    fun getAllUsers(): Response? {
+    fun getAllUsers(
+        @DefaultValue("25")
+        @QueryParam("limit")
+        limit: Int,
+
+        @QueryParam("0")
+        offset: Int
+    ): Response {
+        println(limit)
+        println(offset)
+
+
+
         val userList: List<UserEntity> = userDao.findAllUser()
 
         return Response.ok(
@@ -89,13 +101,13 @@ class UserResource(
             ApiResponse(code = 404, message = "User is not found")
         ]
     )
-    fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: UUID): Response? {
+    fun getUser(@ApiParam(value = "user id to get", required = true) @PathParam("id") id: UUID): Response {
         val user = userDao.findUserById(id)
 
-        return if (user == null) {
+        return if (user.isEmpty) {
             Response.status(Response.Status.NOT_FOUND).build()
         }
-        else Response.ok(userMapperImpl.mapToUserModel(user)).build()
+        else Response.ok(userMapperImpl.mapToUserModel(user.get())).build()
     }
 
     /**
@@ -119,14 +131,14 @@ class UserResource(
             ApiResponse(code = 422, message = "Wrong data")
         ]
     )
-    fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response? {
+    fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response {
         val user = userDao.findUserById(id)
 
-        return if (user == null) {
+        return if (user.isEmpty) {
             Response.status(Response.Status.NOT_FOUND).build()
         }
         else {
-            val updatedUser = userMapperImpl.mapToUserModel(user.id, userToUpdate, user.registrationDate)
+            val updatedUser = userMapperImpl.mapToUserModel(user.get().id, userToUpdate, user.get().registrationDate)
             userDao.updateUser(userMapperImpl.mapToUserEntity(updatedUser))
             Response.ok(updatedUser).build()
         }
@@ -152,15 +164,15 @@ class UserResource(
         ]
     )
     @Path("{id}")
-    fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: UUID): Response? {
+    fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: UUID): Response {
         val user = userDao.findUserById(id)
 
-        return if (user == null) {
+        return if (user.isEmpty) {
             Response.status(Response.Status.NOT_FOUND).build()
         }
         else {
             userDao.deleteById(id)
-            Response.ok(userMapperImpl.mapToUserModel(user)).build()
+            Response.ok(userMapperImpl.mapToUserModel(user.get())).build()
         }
 
     }

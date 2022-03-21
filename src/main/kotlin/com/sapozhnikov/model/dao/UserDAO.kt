@@ -21,7 +21,7 @@ interface UserDAO {
             WHERE id = :id
         """
     )
-    fun findUserById(id: UUID): UserEntity?
+    fun findUserById(id: UUID): Optional<UserEntity>
 
     @SqlUpdate(
         """
