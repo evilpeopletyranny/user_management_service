@@ -23,7 +23,7 @@ data class User(
     val firstName: String,
 
     @ApiModelProperty(
-        value = "second username",
+        value = "last username",
         example = "Dawson",
     )
     @JsonProperty("last_name")

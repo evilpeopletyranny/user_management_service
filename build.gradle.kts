@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("io.strikt:strikt-core:0.34.1")
 
     implementation("com.h2database:h2:2.1.210")
     implementation("io.dropwizard:dropwizard-core:2.0.28")
