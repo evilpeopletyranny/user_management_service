@@ -74,6 +74,4 @@ class UserTest {
         expectThat(mapper.readValue<User>(string))
             .isEqualTo(user)
     }
-
-
 }
