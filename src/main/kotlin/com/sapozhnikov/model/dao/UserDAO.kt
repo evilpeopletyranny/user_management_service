@@ -1,6 +1,5 @@
 package com.sapozhnikov.model.dao
 
-import com.sapozhnikov.model.domain.UserEntity
 import org.jdbi.v3.sqlobject.customizer.BindBean
 import org.jdbi.v3.sqlobject.customizer.Define
 import org.jdbi.v3.sqlobject.statement.SqlQuery

@@ -3,7 +3,7 @@ package com.sapozhnikov.mapper
 import com.sapozhnikov.model.domain.CreateUser
 import com.sapozhnikov.model.domain.UpdateUser
 import com.sapozhnikov.model.domain.User
-import com.sapozhnikov.model.domain.UserEntity
+import com.sapozhnikov.model.dao.UserEntity
 import java.time.LocalDate
 import java.util.UUID
 
@@ -32,26 +32,26 @@ class UserMapper : IUserMapper {
         )
     }
 
-    override fun mapToUserModel(userEntity: CreateUser): User {
+    override fun mapToUserModel(id: UUID, userToCreate: CreateUser): User {
         return User(
-            UUID.randomUUID(),
-            userEntity.firstName,
-            userEntity.lastName,
-            userEntity.age,
-            userEntity.login,
-            userEntity.email,
+            id,
+            userToCreate.firstName,
+            userToCreate.lastName,
+            userToCreate.age,
+            userToCreate.login,
+            userToCreate.email,
             LocalDate.now()
         )
     }
 
-    override fun mapToUserModel(id: UUID, userEntity: UpdateUser, registrationDate: LocalDate): User {
+    override fun mapToUserModel(id: UUID, userToUpdate: UpdateUser, registrationDate: LocalDate): User {
         return User(
             id,
-            userEntity.firstName,
-            userEntity.lastName,
-            userEntity.age,
-            userEntity.login,
-            userEntity.email,
+            userToUpdate.firstName,
+            userToUpdate.lastName,
+            userToUpdate.age,
+            userToUpdate.login,
+            userToUpdate.email,
             registrationDate
         )
     }

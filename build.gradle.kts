@@ -14,7 +14,10 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("io.mockk:mockk:1.12.3")
+    testImplementation(platform("io.strikt:strikt-bom:0.28.2"))
     testImplementation("io.strikt:strikt-core:0.34.1")
+    testImplementation("io.strikt:strikt-java-time:0.28.2")
 
     implementation("com.h2database:h2:2.1.210")
     implementation("io.dropwizard:dropwizard-core:2.0.28")

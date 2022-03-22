@@ -5,7 +5,7 @@ import com.sapozhnikov.model.dao.UserDAO
 import com.sapozhnikov.model.domain.CreateUser
 import com.sapozhnikov.model.domain.UpdateUser
 import com.sapozhnikov.model.domain.User
-import com.sapozhnikov.model.domain.UserEntity
+import com.sapozhnikov.model.dao.UserEntity
 import io.dropwizard.jersey.params.IntParam
 import io.dropwizard.validation.OneOf
 import io.swagger.annotations.*
@@ -49,7 +49,7 @@ class UserResource(
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response {
-        val user = userMapperImpl.mapToUserModel(newUser)
+        val user = userMapperImpl.mapToUserModel(UUID.randomUUID(), newUser)
         userDao.insertUser(userMapperImpl.mapToUserEntity(user))
         return Response.ok(user).build()
     }

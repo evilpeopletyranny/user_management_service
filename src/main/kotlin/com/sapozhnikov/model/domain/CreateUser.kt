@@ -9,7 +9,7 @@ import javax.validation.constraints.Email
 import javax.validation.constraints.NotBlank
 
 @ApiModel(value = "CreateUser", description = "model for user creation")
-class CreateUser(
+data class CreateUser(
     @get:NotBlank
     @get:Length(min = 2, max = 50)
     @ApiModelProperty(
