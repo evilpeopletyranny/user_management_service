@@ -193,6 +193,5 @@ class UserResource(
             userDao.deleteById(id)
             Response.ok(userMapperImpl.mapToUserModel(user.get())).build()
         }
-
     }
 }

@@ -87,23 +87,14 @@ class UserDAOTest {
                 )
             )
         }
-        userList.sortBy { it.id }
+        val a = userList.sortBy { it.id.toString() }
+        println(a)
         userList.forEach { user -> userDAO.insertUser(user) }
 
-        val result = userDAO.findAllUser(limit = 5).sortedBy { it.id }
-
-        result.forEach { user -> println(user) }
-
-        println()
-        println()
-        println()
-
-
-        userList.reverse()
-        userList.forEach { user -> println(user) }
+        val result = userDAO.findAllUser(limit = 5)
 
         expectThat(result.isNotEmpty()).isTrue()
-//        expectThat(result).isEqualTo(userList.subList(0, 6))
+        expectThat(result).isEqualTo(userList.take(5))
     }
 
     @Test
