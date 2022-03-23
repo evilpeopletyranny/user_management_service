@@ -1,7 +1,9 @@
 package com.sapozhnikov.resource
 
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.sapozhnikov.mapper.UserMapper
 import com.sapozhnikov.model.dao.UserDAO
+import com.sapozhnikov.model.dao.UserEntity
 import com.sapozhnikov.model.domain.User
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport
 import io.dropwizard.testing.junit5.ResourceExtension
@@ -19,12 +21,15 @@ import javax.ws.rs.core.Response
 
 @ExtendWith(DropwizardExtensionsSupport::class)
 class UserResourceTest {
-    private var userDAO: UserDAO = mockk<UserDAO>()
-    private var userMapper: UserMapper = UserMapper()
+    private var userDAO: UserDAO = mockk()
+    private var userMapper: UserMapper = mockk()
 
     private var ext: ResourceExtension = ResourceExtension.builder()
         .addResource(UserResource(userMapper, userDAO))
         .build()
+        .apply {
+            objectMapper.registerModule(KotlinModule())
+        }
 
     private lateinit var user: User
 
@@ -53,11 +58,14 @@ class UserResourceTest {
 
     @Test
     fun `get user success`() {
+        every { userMapper.mapToUserEntity(user) } returns
+                UserEntity(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
         every { userDAO.findUserById(UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60")) } returns
                 Optional.of(userMapper.mapToUserEntity(user))
 
         val foundUser = ext.target("/user/${UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60")}")
-            .request().get(User::class.java)
+            .request()
+            .get(User::class.java)
 
         expectThat(foundUser.id).isEqualTo(user.id)
         verify { userDAO.findUserById(UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60")) }

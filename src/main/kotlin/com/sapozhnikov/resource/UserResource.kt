@@ -10,6 +10,7 @@ import io.dropwizard.jersey.params.IntParam
 import io.dropwizard.validation.OneOf
 import io.swagger.annotations.*
 import org.hibernate.validator.constraints.Range
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException
 import java.util.*
 import javax.validation.Valid
 import javax.ws.rs.*
@@ -45,13 +46,17 @@ class UserResource(
     @ApiResponses(
         value = [
             ApiResponse(code = 200, message = "Ok"),
-            ApiResponse(code = 422, message = "Wrong data")
+            ApiResponse(code = 409, message = "Conflict")
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response {
-        val user = userMapperImpl.mapToUserModel(UUID.randomUUID(), newUser)
-        userDao.insertUser(userMapperImpl.mapToUserEntity(user))
-        return Response.ok(user).build()
+        return try {
+            val user = userMapperImpl.mapToUserModel(UUID.randomUUID(), newUser)
+            userDao.insertUser(userMapperImpl.mapToUserEntity(user))
+            Response.ok(user).build()
+        } catch (exception: UnableToExecuteStatementException) {
+            Response.status(Response.Status.CONFLICT).build()
+        }
     }
 
     /**
@@ -147,7 +152,7 @@ class UserResource(
         value = [
             ApiResponse(code = 200, message = "Ok"),
             ApiResponse(code = 404, message = "User is not found"),
-            ApiResponse(code = 422, message = "Wrong data")
+            ApiResponse(code = 409, message = "Conflict")
         ]
     )
     fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response {
@@ -157,11 +162,15 @@ class UserResource(
             Response.status(Response.Status.NOT_FOUND).build()
         }
         else {
-            val updatedUser = userMapperImpl.mapToUserModel(user.get().id, userToUpdate, user.get().registrationDate)
-            userDao.updateUser(userMapperImpl.mapToUserEntity(updatedUser))
-            Response.ok(updatedUser).build()
+            return try {
+                val updatedUser = userMapperImpl.mapToUserModel(user.get().id, userToUpdate, user.get().registrationDate)
+                userDao.updateUser(userMapperImpl.mapToUserEntity(updatedUser))
+                Response.ok(updatedUser).build()
+            }
+            catch (exception: UnableToExecuteStatementException) {
+                Response.status(Response.Status.CONFLICT).build()
+            }
         }
-
     }
 
     /**
