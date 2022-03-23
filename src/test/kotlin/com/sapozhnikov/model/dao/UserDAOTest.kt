@@ -17,6 +17,7 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isTrue
 import java.time.LocalDate
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class UserDAOTest {
@@ -43,6 +44,93 @@ class UserDAOTest {
         userDAO = jdbi.onDemand(UserDAO::class)
     }
 
+    @Test
+    fun `get all users without parameters` () {
+        val userList: MutableList<UserEntity> = ArrayList()
+
+        for (i in 1..10) {
+            userList.add(
+                UserEntity(
+                    id = UUID.randomUUID(),
+                    firstName = "Default$i",
+                    lastName = "User$i",
+                    age = 20 + i,
+                    login = "DefUser$i",
+                    email = "def$i.user$i@gmail.com",
+                    registrationDate = LocalDate.now()
+                )
+            )
+        }
+        userList.sortBy { it.id }
+        userList.forEach { user -> userDAO.insertUser(user) }
+
+        val result = userDAO.findAllUser().sortedBy { it.id }
+
+        expectThat(result.isNotEmpty()).isTrue()
+        expectThat(result).isEqualTo(userList)
+    }
+
+    @Test
+    fun `get all users with limit` () {
+        val userList: MutableList<UserEntity> = ArrayList()
+
+        for (i in 1..10) {
+            userList.add(
+                UserEntity(
+                    id = UUID.randomUUID(),
+                    firstName = "Default$i",
+                    lastName = "User$i",
+                    age = 20 + i,
+                    login = "DefUser$i",
+                    email = "def$i.user$i@gmail.com",
+                    registrationDate = LocalDate.now()
+                )
+            )
+        }
+        userList.sortBy { it.id }
+        userList.forEach { user -> userDAO.insertUser(user) }
+
+        val result = userDAO.findAllUser(limit = 5).sortedBy { it.id }
+
+        result.forEach { user -> println(user) }
+
+        println()
+        println()
+        println()
+
+
+        userList.reverse()
+        userList.forEach { user -> println(user) }
+
+        expectThat(result.isNotEmpty()).isTrue()
+//        expectThat(result).isEqualTo(userList.subList(0, 6))
+    }
+
+    @Test
+    fun `get all users with all search options` () {
+        val userList: MutableList<UserEntity> = ArrayList()
+
+        for (i in 1..10) {
+            userList.add(
+                UserEntity(
+                    id = UUID.randomUUID(),
+                    firstName = "Default$i",
+                    lastName = "User$i",
+                    age = 20 + i,
+                    login = "DefUser$i",
+                    email = "def$i.user$i@gmail.com",
+                    registrationDate = LocalDate.now()
+                )
+            )
+        }
+        userList.sortBy { it.firstName }
+        userList.reverse()
+        userList.forEach { user -> userDAO.insertUser(user) }
+
+        val result = userDAO.findAllUser(limit = 7, offset = 2, orderBy = "first_name", sort = "DESC")
+        expectThat(result.isNotEmpty()).isTrue()
+        expectThat(result).isEqualTo(userList.subList(2, 9))
+    }
 
     @Test
     fun `user successfully created`() {

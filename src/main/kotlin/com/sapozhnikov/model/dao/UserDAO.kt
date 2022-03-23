@@ -16,7 +16,8 @@ interface UserDAO {
             OFFSET :offset
         """
     )
-    fun findAllUser(limit: Int, offset: Int, @Define("orderBy") orderBy: String, @Define("sort") sort: String): List<UserEntity>
+    fun findAllUser(limit: Int = 25, offset: Int = 0, @Define("orderBy") orderBy: String = "id",
+                    @Define("sort") sort: String = "ASC"): List<UserEntity>
 
     @SqlQuery(
         """
