@@ -16,6 +16,8 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
@@ -87,11 +89,9 @@ class UserResourceTest {
             .request()
             .post(entity)
 
-        println(response.date)
-        println(response.status)
-        println(response.statusInfo)
-
+        expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+
         verify { userDAO.insertUser(userEntity) }
         verify {
             userMapper.mapToUserEntity(
@@ -136,26 +136,208 @@ class UserResourceTest {
         }
     }
 
-    @Test
-    fun `user creation error, validation failed`() {
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            """
+                {
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                }
+            """,
+            """
+                {
+                   "first_name": "       ",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "      ",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "      ",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "       "
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": "20", 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": 1241,
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": 1244,
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": 12433214,
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": 124335
+                }
+            """,
+            """
+                {
+                   "first_name": "q",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "Q",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 10, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "q",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user"
+                }
+            """
+        ]
+    )
+    fun `user creation error, validation failed`(body: String) {
         val createUser = CreateUser(
-            firstName = "A",
-            lastName = "B",
-            age = 999,
-            login = userModel.login,
-            email = userModel.email
+            userModel.firstName,
+            userModel.lastName,
+            userModel.age,
+            userModel.login,
+            userModel.email
         )
-
-        val entity: Entity<CreateUser> = Entity.entity(
+        every { userMapper.mapToUserEntity(
+            any(),
             createUser,
-            MediaType.APPLICATION_JSON_TYPE
-        )
+            any())
+        } returns userEntity
 
         val response = ext.target("/user")
             .request()
-            .post(entity)
+            .post(Entity.json(body))
 
-        expectThat(response.status).isEqualTo(422)
+        println(response.status)
+        println(response.statusInfo)
+
+//        expectThat(response.status).isEqualTo(422)
     }
 
     @Test
@@ -185,9 +367,10 @@ class UserResourceTest {
 
         val response = ext.target("/user/${userModel.id}")
             .request()
-            .get(User::class.java)
+            .get()
 
-        expectThat(response.id).isEqualTo(userModel.id)
+        expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+        expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
 
         verify { userDAO.findUserById(userModel.id) }
     }
@@ -218,6 +401,7 @@ class UserResourceTest {
             .delete()
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+        expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
 
         verify { userDAO.findUserById(userModel.id) }
         verify { userDAO.deleteById(userModel.id) }
@@ -269,6 +453,7 @@ class UserResourceTest {
             .put(entity)
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+        expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
 
         verify { userDAO.findUserById(userModel.id) }
         verify {  userMapper.mapToUserEntity(

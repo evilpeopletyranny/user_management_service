@@ -19,6 +19,8 @@ dependencies {
     testImplementation("io.strikt:strikt-core:0.34.1")
     testImplementation("io.strikt:strikt-java-time:0.28.2")
     testImplementation("io.dropwizard:dropwizard-testing:2.0.28")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
+
 
     implementation("com.h2database:h2:2.1.210")
     implementation("io.dropwizard:dropwizard-core:2.0.28")

@@ -20,7 +20,7 @@ data class CreateUser(
     val firstName: String,
 
     @get:NotBlank
-    @get:Length(min = 2, max = 50)
+//    @get:Length(min = 2, max = 50)
     @ApiModelProperty(
         value = "second username",
         example = "Dawson",
