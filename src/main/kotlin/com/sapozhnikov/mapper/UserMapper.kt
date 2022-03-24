@@ -32,20 +32,20 @@ class UserMapper : IUserMapper {
         )
     }
 
-    override fun mapToUserModel(id: UUID, userToCreate: CreateUser): User {
-        return User(
+    override fun mapToUserEntity(id: UUID, userToCreate: CreateUser, registrationDate: LocalDate): UserEntity {
+        return UserEntity(
             id,
             userToCreate.firstName,
             userToCreate.lastName,
             userToCreate.age,
             userToCreate.login,
             userToCreate.email,
-            LocalDate.now()
+            registrationDate
         )
     }
 
-    override fun mapToUserModel(id: UUID, userToUpdate: UpdateUser, registrationDate: LocalDate): User {
-        return User(
+    override fun mapToUserEntity(id: UUID, userToUpdate: UpdateUser, registrationDate: LocalDate): UserEntity {
+        return UserEntity(
             id,
             userToUpdate.firstName,
             userToUpdate.lastName,

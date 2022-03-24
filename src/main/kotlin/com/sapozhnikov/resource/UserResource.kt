@@ -50,13 +50,15 @@ class UserResource(
         ]
     )
     fun createNewUser(@Valid newUser: CreateUser): Response {
-        return try {
-            val user = userMapperImpl.mapToUserModel(UUID.randomUUID(), newUser)
-            userDao.insertUser(userMapperImpl.mapToUserEntity(user))
-            Response.ok(user).build()
+        val userEntity = userMapperImpl.mapToUserEntity(UUID.randomUUID(), newUser, java.time.LocalDate.now())
+
+        try {
+            userDao.insertUser(userEntity)
         } catch (exception: UnableToExecuteStatementException) {
-            Response.status(Response.Status.CONFLICT).build()
+            return Response.status(Response.Status.CONFLICT).build()
         }
+
+        return Response.ok(userMapperImpl.mapToUserModel(userEntity)).build()
     }
 
     /**
@@ -156,21 +158,25 @@ class UserResource(
         ]
     )
     fun updateUser(@ApiParam(value = "user id to update", required = true) @PathParam("id") id: UUID, @Valid userToUpdate: UpdateUser): Response {
-        val user = userDao.findUserById(id)
+        val userEntityOpt = userDao.findUserById(id)
 
-        return if (user.isEmpty) {
-            Response.status(Response.Status.NOT_FOUND).build()
+        if (userEntityOpt.isEmpty) {
+            return Response.status(Response.Status.NOT_FOUND).build()
         }
-        else {
-            return try {
-                val updatedUser = userMapperImpl.mapToUserModel(user.get().id, userToUpdate, user.get().registrationDate)
-                userDao.updateUser(userMapperImpl.mapToUserEntity(updatedUser))
-                Response.ok(updatedUser).build()
-            }
-            catch (exception: UnableToExecuteStatementException) {
-                Response.status(Response.Status.CONFLICT).build()
-            }
+
+        val userEntity = userMapperImpl.mapToUserEntity(
+            userEntityOpt.get().id,
+            userToUpdate,
+            userEntityOpt.get().registrationDate
+        )
+        try {
+            userDao.updateUser(userEntity)
         }
+        catch (exception: UnableToExecuteStatementException) {
+            return Response.status(Response.Status.CONFLICT).build()
+        }
+
+        return Response.ok(userMapperImpl.mapToUserModel(userEntity)).build()
     }
 
     /**
@@ -193,14 +199,13 @@ class UserResource(
     )
     @Path("{id}")
     fun deleteUser(@ApiParam(value = "user id to delete", required = true) @PathParam("id") id: UUID): Response {
-        val user = userDao.findUserById(id)
+        val userEntityOpt = userDao.findUserById(id)
 
-        return if (user.isEmpty) {
-            Response.status(Response.Status.NOT_FOUND).build()
+        if (userEntityOpt.isEmpty) {
+            return Response.status(Response.Status.NOT_FOUND).build()
         }
-        else {
-            userDao.deleteById(id)
-            Response.ok(userMapperImpl.mapToUserModel(user.get())).build()
-        }
+
+        userDao.deleteById(id)
+        return Response.ok(userMapperImpl.mapToUserModel(userEntityOpt.get())).build()
     }
 }

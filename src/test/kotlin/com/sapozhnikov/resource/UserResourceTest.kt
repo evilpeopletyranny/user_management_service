@@ -18,9 +18,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
+import strikt.assertions.isNotNull
 import java.time.LocalDate
 import java.util.*
 import javax.ws.rs.client.Entity
+import javax.ws.rs.core.GenericType
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 
@@ -36,53 +38,87 @@ class UserResourceTest {
             objectMapper.registerModule(KotlinModule())
         }
 
-    private lateinit var user: User
+    private var userModel: User = User(
+        id = UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
+        firstName = "Default",
+        lastName = "User",
+        age = 20,
+        login = "defUser",
+        email = "def.userModel@gmail.com",
+        registrationDate = LocalDate.now()
+    )
+
+    private var userEntity: UserEntity = UserEntity(
+        id = UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
+        firstName = "Default",
+        lastName = "User",
+        age = 20,
+        login = "defUser",
+        email = "def.userModel@gmail.com",
+        registrationDate = LocalDate.now()
+    )
 
     @BeforeEach
     fun setup() {
-        user = User(
-            id = UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
-            firstName = "Default",
-            lastName = "User",
-            age = 20,
-            login = "defUser",
-            email = "def.user@gmail.com",
-            registrationDate = LocalDate.now()
-        )
+        every { userMapper.mapToUserModel(userEntity) } returns
+                userModel
     }
 
     @Test
     fun `create new user`() {
-        every { userDAO.insertUser(userMapper.mapToUserEntity(user)) } returns
+        val createUser = CreateUser(
+            userModel.firstName, userModel.lastName, userModel.age, userModel.login, userModel.email
+        )
+
+        every { userDAO.insertUser(userEntity) } returns
             Unit
-        every { userMapper.mapToUserModel(
+
+        every { userMapper.mapToUserEntity(
             any(),
-            CreateUser(user.firstName, user.lastName, user.age, user.login, user.email))
-        } returns user
+            createUser,
+            LocalDate.now())
+        } returns userEntity
 
         val entity: Entity<CreateUser> = Entity.entity(
-            CreateUser(user.firstName, user.lastName, user.age, user.login, user.email),
+            createUser,
             MediaType.APPLICATION_JSON_TYPE
         )
         val response = ext.target("/user")
             .request()
             .post(entity)
 
+        println(response.date)
+        println(response.status)
+        println(response.statusInfo)
+
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
-        verify { userDAO.insertUser(userMapper.mapToUserEntity(user)) }
+        verify { userDAO.insertUser(userEntity) }
+        verify {
+            userMapper.mapToUserEntity(
+                any(),
+                createUser,
+                LocalDate.now()
+            )
+        }
     }
 
     @Test
     fun `user creation error, uniqueness violation`() {
-        every { userDAO.insertUser(userMapper.mapToUserEntity(user)) } throws
+        val createUser = CreateUser(
+            userModel.firstName, userModel.lastName, userModel.age, userModel.login, userModel.email
+        )
+
+        every { userDAO.insertUser(userEntity) } throws
                 UnableToExecuteStatementException("login uniqueness violation")
-        every { userMapper.mapToUserModel(
+
+        every { userMapper.mapToUserEntity(
             any(),
-            CreateUser(user.firstName, user.lastName, user.age, user.login, user.email))
-        } returns user
+            createUser,
+            LocalDate.now())
+        } returns userEntity
 
         val entity: Entity<CreateUser> = Entity.entity(
-            CreateUser(user.firstName, user.lastName, user.age, user.login, user.email),
+            createUser,
             MediaType.APPLICATION_JSON_TYPE
         )
 
@@ -91,164 +127,239 @@ class UserResourceTest {
             .post(entity)
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.CONFLICT)
-        verify { userDAO.insertUser(userMapper.mapToUserEntity(user)) }
+        verify { userDAO.insertUser(userEntity) }
+        verify { userMapper.mapToUserEntity(
+                any(),
+                createUser,
+                LocalDate.now()
+            )
+        }
     }
 
-    /**
-     * THIS DOES NOT WORK
-     * */
+    @Test
+    fun `user creation error, validation failed`() {
+        val createUser = CreateUser(
+            firstName = "A",
+            lastName = "B",
+            age = 999,
+            login = userModel.login,
+            email = userModel.email
+        )
+
+        val entity: Entity<CreateUser> = Entity.entity(
+            createUser,
+            MediaType.APPLICATION_JSON_TYPE
+        )
+
+        val response = ext.target("/user")
+            .request()
+            .post(entity)
+
+        expectThat(response.status).isEqualTo(422)
+    }
+
     @Test
     fun `get all users`() {
-        every { userMapper.mapToUserEntity(user) } returns
-                UserEntity(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
+        every { userMapper.mapToUserEntity(userModel) } returns
+                userEntity
+
         every { userDAO.findAllUser() } returns
-                listOf(userMapper.mapToUserEntity(user))
+                listOf(userMapper.mapToUserEntity(userModel))
 
-//        val response = ext.target("/user")
-//            .request()
-//            .get(GenericType<List<User>> {})
 
+        val response = ext.target("/user")
+            .request()
+            .get()
+
+        expectThat(response.readEntity(object : GenericType<List<User>>() {})).isNotNull()
+        expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+
+        verify { userMapper.mapToUserEntity(userModel) }
+        verify { userDAO.findAllUser() }
     }
-
 
     @Test
     fun `get user success`() {
-        every { userMapper.mapToUserEntity(user) } returns
-                UserEntity(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
-        every { userMapper.mapToUserModel(userMapper.mapToUserEntity(user)) } returns
-                user
-        every { userMapper.mapToUserModel(
-            any(),
-            UpdateUser(user.lastName, user.lastName, user.age, user.login, user.email),
-            LocalDate.now())
-        } returns user
-        every { userDAO.findUserById(user.id) } returns
-                Optional.of(userMapper.mapToUserEntity(user))
+        every { userDAO.findUserById(userModel.id) } returns
+                Optional.of(userEntity)
 
-        val response = ext.target("/user/${user.id}")
+        val response = ext.target("/user/${userModel.id}")
             .request()
             .get(User::class.java)
 
-        expectThat(response.id).isEqualTo(user.id)
-        verify { userDAO.findUserById(user.id) }
+        expectThat(response.id).isEqualTo(userModel.id)
+
+        verify { userDAO.findUserById(userModel.id) }
     }
 
     @Test
     fun `get user not found`() {
-        every { userDAO.findUserById(user.id) } returns
+        every { userDAO.findUserById(userModel.id) } returns
                 Optional.empty()
 
-        val response = ext.target("/user/${UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60")}")
+        val response = ext.target("/user/${userModel.id}")
             .request()
             .get()
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.NOT_FOUND)
-    }
 
-    /**
-     * THIS DOES NOT WORK
-     * */
-    @Test
-    fun `update user`() {
-        every { userMapper.mapToUserEntity(user) } returns
-                UserEntity(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
-        every { userMapper.mapToUserModel(userMapper.mapToUserEntity(user)) } returns
-                user
-        every { userMapper.mapToUserModel(
-            any(),
-            UpdateUser(user.firstName, user.lastName, user.age, user.login, user.email),
-            LocalDate.now()
-        ) } returns user
-        every { userDAO.findUserById(user.id) } returns
-                Optional.of(userMapper.mapToUserEntity(user))
-        every { userDAO.updateUser(userMapper.mapToUserEntity(user)) } returns
-                Unit
-
-        val entity: Entity<UpdateUser> = Entity.entity(
-            UpdateUser(user.firstName, user.lastName, user.age, user.login, user.email),
-            MediaType.APPLICATION_JSON_TYPE
-        )
-
-        val response = ext.target("/user/${UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60")}")
-            .request()
-            .put(entity)
-
-        println(response.status)
-        println(response.date)
-        println(response.statusInfo)
-    }
-
-    @Test
-    fun `user update error not found`() {
-        every { userDAO.findUserById(user.id) } returns
-                Optional.empty()
-
-        val entity: Entity<UpdateUser> = Entity.entity(
-            UpdateUser(user.firstName, user.lastName, user.age, user.login, user.email),
-            MediaType.APPLICATION_JSON_TYPE
-        )
-
-        val response = ext.target("/user/${UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60")}")
-            .request()
-            .put(entity)
-
-        expectThat(response.statusInfo).isEqualTo(Response.Status.NOT_FOUND)
-    }
-
-    @Test
-    fun `user update error , uniqueness violation`() {
-        every { userMapper.mapToUserEntity(user) } returns
-                UserEntity(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
-        every { userDAO.findUserById(user.id) } returns
-                Optional.of(userMapper.mapToUserEntity(user))
-        every { userDAO.updateUser(userMapper.mapToUserEntity(user)) } throws
-                UnableToExecuteStatementException("login uniqueness violation")
-        every { userMapper.mapToUserModel(
-            any(),
-            UpdateUser(user.firstName, user.lastName, user.age, user.login, user.email),
-            user.registrationDate)
-        } returns user
-
-        val entity: Entity<UpdateUser> = Entity.entity(
-            UpdateUser(user.firstName, user.lastName, user.age, user.login, user.email),
-            MediaType.APPLICATION_JSON_TYPE
-        )
-
-        val response = ext.target("/user/${user.id}")
-            .request()
-            .put(entity)
-
-        expectThat(response.status).isEqualTo(409)
-        verify { userDAO.updateUser(userMapper.mapToUserEntity(user)) }
+        verify { userDAO.findUserById(userModel.id)  }
     }
 
     @Test
     fun `delete user`() {
-        every { userMapper.mapToUserEntity(user) } returns
-                UserEntity(user.id, user.firstName, user.lastName, user.age, user.login, user.email, user.registrationDate)
-        every { userMapper.mapToUserModel(userMapper.mapToUserEntity(user)) } returns
-                user
-        every { userDAO.findUserById(user.id) } returns
-                Optional.of(userMapper.mapToUserEntity(user))
-        every { userDAO.deleteById(user.id) } returns
+        every { userDAO.findUserById(userModel.id) } returns
+                Optional.of(userEntity)
+        every { userDAO.deleteById(userModel.id) } returns
                 Unit
 
-        val response = ext.target("/user/${user.id}")
+        val response = ext.target("/user/${userModel.id}")
             .request()
             .delete()
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+
+        verify { userDAO.findUserById(userModel.id) }
+        verify { userDAO.deleteById(userModel.id) }
     }
 
     @Test
     fun `user delete error, not found`() {
-        every { userDAO.findUserById(user.id) } returns
+        every { userDAO.findUserById(userModel.id) } returns
                 Optional.empty()
 
-        val response = ext.target("/user/${user.id}")
+        val response = ext.target("/user/${userModel.id}")
             .request()
             .delete()
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.NOT_FOUND)
+
+        verify { userDAO.findUserById(userModel.id) }
+    }
+
+    @Test
+    fun `update user`() {
+        val updateUser = UpdateUser(
+            userModel.firstName,
+            userModel.lastName,
+            userModel.age,
+            userModel.login,
+            userModel.email
+        )
+
+        every { userDAO.findUserById(userModel.id) } returns
+                Optional.of(userEntity)
+
+        every { userMapper.mapToUserEntity(
+            userModel.id,
+            updateUser,
+            LocalDate.now()
+        ) } returns userEntity
+
+        every { userDAO.updateUser(userEntity) } returns
+                Unit
+
+        val entity: Entity<UpdateUser> = Entity.entity(
+            updateUser,
+            MediaType.APPLICATION_JSON_TYPE
+        )
+
+        val response = ext.target("/user/${userModel.id}")
+            .request()
+            .put(entity)
+
+        expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+
+        verify { userDAO.findUserById(userModel.id) }
+        verify {  userMapper.mapToUserEntity(
+            userModel.id,
+            updateUser,
+            LocalDate.now()
+        ) }
+        verify { userDAO.updateUser(userEntity) }
+    }
+
+    @Test
+    fun `user update error not found`() {
+        every { userDAO.findUserById(userModel.id) } returns
+                Optional.empty()
+
+        val entity: Entity<UpdateUser> = Entity.entity(
+            UpdateUser(userModel.firstName, userModel.lastName, userModel.age, userModel.login, userModel.email),
+            MediaType.APPLICATION_JSON_TYPE
+        )
+
+        val response = ext.target("/user/${userModel.id}")
+            .request()
+            .put(entity)
+
+        expectThat(response.statusInfo).isEqualTo(Response.Status.NOT_FOUND)
+
+        verify { userDAO.findUserById(userModel.id) }
+    }
+
+    @Test
+    fun `user update error , uniqueness violation`() {
+        val updateUser = UpdateUser(
+            userModel.firstName,
+            userModel.lastName,
+            userModel.age,
+            userModel.login,
+            userModel.email
+        )
+
+        every { userDAO.findUserById(userModel.id) } returns
+                Optional.of(userEntity)
+
+        every { userDAO.updateUser(userEntity) } throws
+                UnableToExecuteStatementException("login uniqueness violation")
+
+        every { userMapper.mapToUserEntity(
+                any(),
+                updateUser,
+                LocalDate.now()
+            )
+        } returns userEntity
+
+        val entity: Entity<UpdateUser> = Entity.entity(
+            updateUser,
+            MediaType.APPLICATION_JSON_TYPE
+        )
+
+        val response = ext.target("/user/${userModel.id}")
+            .request()
+            .put(entity)
+
+        expectThat(response.status).isEqualTo(409)
+
+        verify { userDAO.findUserById(userModel.id) }
+        verify { userDAO.updateUser(userEntity) }
+        verify { userMapper.mapToUserEntity(
+            any(),
+            updateUser,
+            LocalDate.now()
+        ) }
+    }
+
+    @Test
+    fun `user update error, validation failed`() {
+        val updateUser = UpdateUser(
+            firstName = "A",
+            lastName = "B",
+            age = 999,
+            login = userModel.login,
+            email = userModel.email
+        )
+
+        val entity: Entity<UpdateUser> = Entity.entity(
+            updateUser,
+            MediaType.APPLICATION_JSON_TYPE
+        )
+
+        val response = ext.target("/user/${userModel.id}")
+            .request()
+            .put(entity)
+
+        expectThat(response.status).isEqualTo(422)
     }
 }

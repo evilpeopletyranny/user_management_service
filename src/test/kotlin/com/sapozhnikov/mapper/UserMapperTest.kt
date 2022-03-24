@@ -13,12 +13,12 @@ import java.util.*
 
 class UserMapperTest {
     private lateinit var userMapper: UserMapper
-    private lateinit var user: User
+    private lateinit var userEntity: UserEntity
 
     @BeforeEach
     fun beforeEach() {
         userMapper = UserMapper()
-        user = User(
+        userEntity = UserEntity(
             id = UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
             firstName = "Default",
             lastName = "User",
@@ -27,25 +27,11 @@ class UserMapperTest {
             email = "default.user@gmail.com",
             registrationDate = LocalDate.now()
         )
-    }
-
-    @Test
-    fun `from user to userEntity`() {
-        val userEntity = UserEntity(
-            id = UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
-            firstName = "Default",
-            lastName = "User",
-            age = 20,
-            login = "defUser",
-            email = "default.user@gmail.com",
-            registrationDate = LocalDate.now()
-        )
-        expectThat(userEntity).isEqualTo(userMapper.mapToUserEntity(user))
     }
 
     @Test
     fun `from userEntity to user`() {
-        val userEntity = UserEntity(
+        val userModel = User(
             id = UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
             firstName = "Default",
             lastName = "User",
@@ -54,37 +40,56 @@ class UserMapperTest {
             email = "default.user@gmail.com",
             registrationDate = LocalDate.now()
         )
-        expectThat(userMapper.mapToUserModel(userEntity)).isEqualTo(user)
+        expectThat(userModel).isEqualTo(userMapper.mapToUserModel(userEntity))
     }
 
     @Test
-    fun `from createUser to user`() {
-        val userToCreate = CreateUser(
+    fun `from user to userEntity`() {
+        val userModel = User(
+            id = UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
+            firstName = "Default",
+            lastName = "User",
+            age = 20,
+            login = "defUser",
+            email = "default.user@gmail.com",
+            registrationDate = LocalDate.now()
+        )
+        expectThat(userMapper.mapToUserEntity(userModel)).isEqualTo(userEntity)
+    }
+
+    @Test
+    fun `from createUser to userEntity`() {
+        val createUser = CreateUser(
+            firstName = "Default",
+            lastName = "User",
+            age = 20,
+            login = "defUser",
+            email = "default.user@gmail.com",
+        )
+        expectThat(
+            userMapper.mapToUserEntity(
+                UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
+                createUser,
+                LocalDate.now()
+            )
+        ).isEqualTo(userEntity)
+    }
+
+    @Test
+    fun `from updateUser to userEntity`() {
+        val updateUser = UpdateUser(
             firstName = "Default",
             lastName = "User",
             age = 20,
             login = "defUser",
             email = "default.user@gmail.com"
         )
-        expectThat(userMapper.mapToUserModel(
-            UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
-            userToCreate)
-        ).isEqualTo(user)
-    }
-
-    @Test
-    fun `from updateUser to user`() {
-        val userToUpdate = UpdateUser(
-            firstName = "Default",
-            lastName = "User",
-            age = 20,
-            login = "defUser",
-            email = "default.user@gmail.com"
-        )
-        expectThat(userMapper.mapToUserModel(
-            UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
-            userToUpdate,
-            LocalDate.now())
-        ).isEqualTo(user)
+        expectThat(
+            userMapper.mapToUserEntity(
+                UUID.fromString("fbd6086d-0afe-479c-873b-f50986c19c60"),
+                updateUser,
+                LocalDate.now()
+            )
+        ).isEqualTo(userEntity)
     }
 }

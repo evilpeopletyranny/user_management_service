@@ -10,6 +10,6 @@ import java.util.*
 interface IUserMapper {
     fun mapToUserEntity(userModel: User): UserEntity
     fun mapToUserModel(userEntity: UserEntity): User
-    fun mapToUserModel(id: UUID, userToCreate: CreateUser): User
-    fun mapToUserModel(id: UUID, userToUpdate: UpdateUser, registrationDate: LocalDate): User
+    fun mapToUserEntity(id: UUID, userToCreate: CreateUser, registrationDate: LocalDate): UserEntity
+    fun mapToUserEntity(id: UUID, userToUpdate: UpdateUser, registrationDate: LocalDate): UserEntity
 }
