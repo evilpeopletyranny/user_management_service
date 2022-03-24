@@ -3,15 +3,12 @@ package com.sapozhnikov.model.domain
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
-import org.hibernate.validator.constraints.Length
-import org.hibernate.validator.constraints.Range
-import javax.validation.constraints.Email
-import javax.validation.constraints.NotBlank
+import javax.validation.constraints.*
 
 @ApiModel(value = "CreateUser", description = "model for user creation")
 data class CreateUser(
     @get:NotBlank
-    @get:Length(min = 2, max = 50)
+    @get:Size(min = 2, max = 50)
     @ApiModelProperty(
         value = "first username",
         example = "Jack",
@@ -20,7 +17,7 @@ data class CreateUser(
     val firstName: String,
 
     @get:NotBlank
-//    @get:Length(min = 2, max = 50)
+    @get:Size(min = 2, max = 50)
     @ApiModelProperty(
         value = "second username",
         example = "Dawson",
@@ -28,7 +25,8 @@ data class CreateUser(
     @JsonProperty("last_name")
     val lastName: String,
 
-    @get:Range(min = 16, max = 99)
+    @get:Min(16)
+    @get:Max(99)
     @ApiModelProperty(
         value = "user age",
         example = "25",
@@ -37,7 +35,7 @@ data class CreateUser(
     val age: Int,
 
     @get:NotBlank
-    @get:Length(min = 4, max = 50)
+    @get:Size(min = 2, max = 50)
     @ApiModelProperty(
         value = "user login",
         example = "jAckDaWson23",

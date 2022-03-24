@@ -126,6 +126,9 @@ class UserResourceTest {
             .request()
             .post(entity)
 
+        println(response.status)
+        println(response.statusInfo)
+
         expectThat(response.statusInfo).isEqualTo(Response.Status.CONFLICT)
         verify { userDAO.insertUser(userEntity) }
         verify { userMapper.mapToUserEntity(
@@ -159,14 +162,6 @@ class UserResourceTest {
                 {
                    "first_name": "Default",
                    "last_name": "User",
-                   "login": "defUser",
-                   "email": "def.user@gmail.com"
-                }
-            """,
-            """
-                {
-                   "first_name": "Default",
-                   "last_name": "User",
                    "age": 20, 
                    "email": "def.user@gmail.com"
                 }
@@ -177,6 +172,40 @@ class UserResourceTest {
                    "last_name": "User",
                    "age": 20, 
                    "login": "defUser",
+                }
+            """
+        ]
+    )
+    fun `user creation error, empty fields`(body: String) {
+        val createUser = CreateUser(
+            userModel.firstName,
+            userModel.lastName,
+            userModel.age,
+            userModel.login,
+            userModel.email
+        )
+        every { userMapper.mapToUserEntity(
+            any(),
+            createUser,
+            any())
+        } returns userEntity
+
+        val response = ext.target("/user")
+            .request()
+            .post(Entity.json(body))
+
+        expectThat(response.status).isEqualTo(400)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
                 }
             """,
             """
@@ -213,24 +242,6 @@ class UserResourceTest {
                    "age": 20, 
                    "login": "defUser",
                    "email": "       "
-                }
-            """,
-            """
-                {
-                   "first_name": "Default",
-                   "last_name": "User",
-                   "age": "20", 
-                   "login": "defUser",
-                   "email": "def.user@gmail.com"
-                }
-            """,
-            """
-                {
-                   "first_name": "Default",
-                   "last_name": "User",
-                   "age": 20, 
-                   "login": "defUser",
-                   "email": "def.user@gmail.com"
                 }
             """,
             """
@@ -334,10 +345,7 @@ class UserResourceTest {
             .request()
             .post(Entity.json(body))
 
-        println(response.status)
-        println(response.statusInfo)
-
-//        expectThat(response.status).isEqualTo(422)
+        expectThat(response.status).isEqualTo(422)
     }
 
     @Test
