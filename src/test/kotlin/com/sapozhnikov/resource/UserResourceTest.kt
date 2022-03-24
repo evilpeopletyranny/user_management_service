@@ -534,24 +534,208 @@ class UserResourceTest {
         ) }
     }
 
-    @Test
-    fun `user update error, validation failed`() {
-        val updateUser = UpdateUser(
-            firstName = "A",
-            lastName = "B",
-            age = 999,
-            login = userModel.login,
-            email = userModel.email
-        )
 
-        val entity: Entity<UpdateUser> = Entity.entity(
-            updateUser,
-            MediaType.APPLICATION_JSON_TYPE
+
+
+
+
+
+
+
+
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            """
+                {
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                }
+            """
+        ]
+    )
+    fun `user update error, empty fields`(body: String) {
+        val response = ext.target("/user")
+            .request()
+            .post(Entity.json(body))
+
+        expectThat(response.status).isEqualTo(400)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "       ",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "      ",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "      ",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "       "
+                }
+            """,
+            """
+                {
+                   "first_name": 1241,
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": 1244,
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": 12433214,
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": 124335
+                }
+            """,
+            """
+                {
+                   "first_name": "q",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "Q",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 10, 
+                   "login": "defUser",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "q",
+                   "email": "def.user@gmail.com"
+                }
+            """,
+            """
+                {
+                   "first_name": "Default",
+                   "last_name": "User",
+                   "age": 20, 
+                   "login": "defUser",
+                   "email": "def.user"
+                }
+            """
+        ]
+    )
+    fun `user update error, validation failed`(body: String) {
+        val updateUser = UpdateUser(
+            userModel.firstName,
+            userModel.lastName,
+            userModel.age,
+            userModel.login,
+            userModel.email
         )
+        every { userMapper.mapToUserEntity(
+            any(),
+            updateUser,
+            any())
+        } returns userEntity
 
         val response = ext.target("/user/${userModel.id}")
             .request()
-            .put(entity)
+            .put(Entity.json(body))
 
         expectThat(response.status).isEqualTo(422)
     }
