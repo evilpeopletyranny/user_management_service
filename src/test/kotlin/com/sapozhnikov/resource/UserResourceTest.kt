@@ -60,6 +60,24 @@ class UserResourceTest {
         registrationDate = LocalDate.now()
     )
 
+    private fun parseQueryString(queryString: String): List<Pair<String, String>> {
+        require(queryString.startsWith("?")) {
+            "Query string must start with ?"
+        }
+
+        if (queryString.isEmpty() || queryString == "?") return emptyList()
+
+        return queryString.drop(1).split("&").map { item ->
+            item.split("=").let { param ->
+                when (param.size) {
+                    1 -> param.first() to ""
+                    2 -> param.first() to param.last()
+                    else -> throw IllegalArgumentException("Multiple = signs in parameter: '$item'")
+                }
+            }
+        }
+    }
+
     @BeforeEach
     fun setup() {
         every { userMapper.mapToUserModel(userEntity) } returns
@@ -78,7 +96,7 @@ class UserResourceTest {
         every { userMapper.mapToUserEntity(
             any(),
             createUser,
-            LocalDate.now())
+            any())
         } returns userEntity
 
         val entity: Entity<CreateUser> = Entity.entity(
@@ -91,15 +109,6 @@ class UserResourceTest {
 
         expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
-
-        verify { userDAO.insertUser(userEntity) }
-        verify {
-            userMapper.mapToUserEntity(
-                any(),
-                createUser,
-                LocalDate.now()
-            )
-        }
     }
 
     @Test
@@ -114,7 +123,7 @@ class UserResourceTest {
         every { userMapper.mapToUserEntity(
             any(),
             createUser,
-            LocalDate.now())
+            any())
         } returns userEntity
 
         val entity: Entity<CreateUser> = Entity.entity(
@@ -126,17 +135,7 @@ class UserResourceTest {
             .request()
             .post(entity)
 
-        println(response.status)
-        println(response.statusInfo)
-
         expectThat(response.statusInfo).isEqualTo(Response.Status.CONFLICT)
-        verify { userDAO.insertUser(userEntity) }
-        verify { userMapper.mapToUserEntity(
-                any(),
-                createUser,
-                LocalDate.now()
-            )
-        }
     }
 
     @ParameterizedTest
@@ -246,33 +245,6 @@ class UserResourceTest {
             """,
             """
                 {
-                   "first_name": 1241,
-                   "last_name": "User",
-                   "age": 20, 
-                   "login": "defUser",
-                   "email": "def.user@gmail.com"
-                }
-            """,
-            """
-                {
-                   "first_name": "Default",
-                   "last_name": 1244,
-                   "age": 20, 
-                   "login": "defUser",
-                   "email": "def.user@gmail.com"
-                }
-            """,
-            """
-                {
-                   "first_name": "Default",
-                   "last_name": "User",
-                   "age": 20, 
-                   "login": 12433214,
-                   "email": "def.user@gmail.com"
-                }
-            """,
-            """
-                {
                    "first_name": "Default",
                    "last_name": "User",
                    "age": 20, 
@@ -353,19 +325,118 @@ class UserResourceTest {
         every { userMapper.mapToUserEntity(userModel) } returns
                 userEntity
 
-        every { userDAO.findAllUser() } returns
-                listOf(userMapper.mapToUserEntity(userModel))
+        every { userDAO.findAllUser(
+            limit = 25,
+            offset = 0,
+            orderBy = "id",
+            sort = "ASC")
+        } returns
+            listOf(userEntity)
 
 
         val response = ext.target("/user")
             .request()
             .get()
 
-        expectThat(response.readEntity(object : GenericType<List<User>>() {})).isNotNull()
+        val resList = response.readEntity(object : GenericType<List<User>>() {})
+        expectThat(resList).isNotNull()
+        expectThat(resList).isEqualTo(listOf(userModel))
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+    }
 
-        verify { userMapper.mapToUserEntity(userModel) }
-        verify { userDAO.findAllUser() }
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "",
+            "?",
+            "?limit=1",
+            "?limit=10",
+            "?limit=100",
+            "?offset=0",
+            "?offset=10",
+            "?offset=99",
+            "?orderBy=id",
+            "?orderBy=first_name",
+            "?orderBy=last_name",
+            "?orderBy=age",
+            "?orderBy=login",
+            "?orderBy=email",
+            "?orderBy=registration_date",
+            "?sort=ASC",
+            "?sort=DESC"
+        ]
+    )
+    fun `list succeeds on valid query strings` (queryString: String) {
+        val params = if (queryString.isNotEmpty()) {
+            parseQueryString(queryString)
+        }
+        else {
+            emptyList()
+        }
+
+        every { userDAO.findAllUser(any(), any(), any(), any()) } returns
+                emptyList()
+
+        val response = ext.target("/user")
+            .let { params.fold(it) { target, param -> target.queryParam(param.first, param.second) } }
+            .request()
+            .get()
+
+        expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "?limit=-1",
+            "?limit=101",
+            "?offset=-1",
+            "?offset=100",
+            "?orderBy=idd",
+            "?orderBy=firstName",
+            "?orderBy=lastName",
+            "?orderBy=agee",
+            "?orderBy=logiin",
+            "?orderBy=emaiil",
+            "?orderBy=registrationDate",
+            "?sort=ASCC",
+            "?sort=DESCC"
+        ]
+    )
+    fun `list fails with 400 on invalid query strings`(queryString: String) {
+        val params = parseQueryString(queryString)
+
+        val response = ext.target("/user")
+            .let { params.fold(it) { target, param -> target.queryParam(param.first, param.second) } }
+            .request()
+            .get()
+
+        expectThat(response.statusInfo).isEqualTo(Response.Status.BAD_REQUEST)
+    }
+
+    @Test
+    fun `list passes query params to dao correctly`() {
+        every { userDAO.findAllUser(any(), any(), any(), any()) } returns
+                emptyList()
+
+        val response = ext.target("/user")
+            .queryParam("limit", "10")
+            .queryParam("offset", "5")
+            .queryParam("orderBy", "id")
+            .queryParam("sort", "ASC")
+            .request()
+            .get()
+
+        verify(exactly = 1) {
+            userDAO.findAllUser(
+                limit = 10,
+                offset = 5,
+                orderBy = "id",
+                sort = "ASC"
+            )
+        }
+
+        expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
     }
 
     @Test
@@ -379,8 +450,6 @@ class UserResourceTest {
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
         expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
-
-        verify { userDAO.findUserById(userModel.id) }
     }
 
     @Test
@@ -393,8 +462,6 @@ class UserResourceTest {
             .get()
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.NOT_FOUND)
-
-        verify { userDAO.findUserById(userModel.id)  }
     }
 
     @Test
@@ -410,9 +477,6 @@ class UserResourceTest {
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
         expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
-
-        verify { userDAO.findUserById(userModel.id) }
-        verify { userDAO.deleteById(userModel.id) }
     }
 
     @Test
@@ -425,8 +489,6 @@ class UserResourceTest {
             .delete()
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.NOT_FOUND)
-
-        verify { userDAO.findUserById(userModel.id) }
     }
 
     @Test
@@ -445,7 +507,7 @@ class UserResourceTest {
         every { userMapper.mapToUserEntity(
             userModel.id,
             updateUser,
-            LocalDate.now()
+            any()
         ) } returns userEntity
 
         every { userDAO.updateUser(userEntity) } returns
@@ -462,14 +524,6 @@ class UserResourceTest {
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.OK)
         expectThat(response.readEntity(User::class.java)).isEqualTo(userModel)
-
-        verify { userDAO.findUserById(userModel.id) }
-        verify {  userMapper.mapToUserEntity(
-            userModel.id,
-            updateUser,
-            LocalDate.now()
-        ) }
-        verify { userDAO.updateUser(userEntity) }
     }
 
     @Test
@@ -487,8 +541,6 @@ class UserResourceTest {
             .put(entity)
 
         expectThat(response.statusInfo).isEqualTo(Response.Status.NOT_FOUND)
-
-        verify { userDAO.findUserById(userModel.id) }
     }
 
     @Test
@@ -510,7 +562,7 @@ class UserResourceTest {
         every { userMapper.mapToUserEntity(
                 any(),
                 updateUser,
-                LocalDate.now()
+                any()
             )
         } returns userEntity
 
@@ -530,19 +582,9 @@ class UserResourceTest {
         verify { userMapper.mapToUserEntity(
             any(),
             updateUser,
-            LocalDate.now()
+            any()
         ) }
     }
-
-
-
-
-
-
-
-
-
-
 
     @ParameterizedTest
     @ValueSource(
@@ -634,33 +676,6 @@ class UserResourceTest {
                    "age": 20, 
                    "login": "defUser",
                    "email": "       "
-                }
-            """,
-            """
-                {
-                   "first_name": 1241,
-                   "last_name": "User",
-                   "age": 20, 
-                   "login": "defUser",
-                   "email": "def.user@gmail.com"
-                }
-            """,
-            """
-                {
-                   "first_name": "Default",
-                   "last_name": 1244,
-                   "age": 20, 
-                   "login": "defUser",
-                   "email": "def.user@gmail.com"
-                }
-            """,
-            """
-                {
-                   "first_name": "Default",
-                   "last_name": "User",
-                   "age": 20, 
-                   "login": 12433214,
-                   "email": "def.user@gmail.com"
                 }
             """,
             """

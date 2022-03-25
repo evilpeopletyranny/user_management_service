@@ -1,7 +1,9 @@
-package com.sapozhnikov.model.dao
+package com.sapozhnikov.dao
 
 import com.codahale.metrics.MetricRegistry
 import com.sapozhnikov.LiquibaseMigrator
+import com.sapozhnikov.model.dao.UserDAO
+import com.sapozhnikov.model.dao.UserEntity
 import io.dropwizard.db.DataSourceFactory
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.h2.H2DatabasePlugin
